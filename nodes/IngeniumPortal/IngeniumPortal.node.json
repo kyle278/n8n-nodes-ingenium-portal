@@ -1,0 +1,14 @@
+{
+	"node": "n8n-nodes-ingenium-portal.ingeniumPortal",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Sales"],
+	"resources": {
+		"primaryDocumentation": [
+			{ "url": "https://github.com/kyle278/n8n-nodes-ingenium-portal#readme" }
+		],
+		"credentialDocumentation": [
+			{ "url": "https://github.com/kyle278/n8n-nodes-ingenium-portal#credentials" }
+		]
+	}
+}

@@ -1,0 +1,8 @@
+dist
+node_modules
+
+.env*
+*.tsbuildinfo
+*.tgz
+.n8n/
+
