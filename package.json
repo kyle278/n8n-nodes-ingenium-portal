@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-ingenium-portal",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Organisation-scoped records, SMS and workflow state for Ingenium Portal",
 	"license": "MIT",
 	"homepage": "https://github.com/kyle278/n8n-nodes-ingenium-portal#readme",

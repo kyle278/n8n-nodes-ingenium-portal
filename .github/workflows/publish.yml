@@ -23,4 +23,4 @@ jobs:
       - name: Check tag matches package version
         run: node -e "if(process.env.GITHUB_REF_NAME !== 'v'+require('./package.json').version) process.exit(1)"
       - name: Publish with provenance
-        run: npm publish --provenance --access public
+        run: npm run release
