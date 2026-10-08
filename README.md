@@ -2,19 +2,19 @@
 
 For immediate n8n Cloud setup, use the [built-in HTTP workflows](examples/cloud/README.md). They do not require installing this custom node. Custom-node Cloud availability remains subject to n8n verification.
 
-Connect n8n workflows to an organisation in Ingenium Portal. Read and update CRM records, send permission-checked SMS and keep durable workflow state using the portal's organisation integration API.
+Connect n8n workflows to an organisation in Ingenium Portal. Read and update CRM records, send SMS through the organisation's configured connector and keep durable workflow state using the portal's organisation integration API.
 
 **Published preview:** available on npm for local/self-hosted n8n. n8n Cloud installation still requires verification. The API can already be used on Cloud with HTTP Request nodes.
 
 ## Operations
 
-| Resource          | Operations                                         |
-| ----------------- | -------------------------------------------------- |
-| Record            | Create, Get, Get Many, Search, Update              |
-| Schema            | Get allowed objects, fields and options            |
-| SMS               | Send to a record, with optional eligibility checks |
-| Workflow state    | Get, Get Many, Set                                 |
-| Operation receipt | Get                                                |
+| Resource          | Operations                                    |
+| ----------------- | --------------------------------------------- |
+| Record            | Create, Get, Get Many, Search, Update         |
+| Schema            | Get allowed objects, fields and options       |
+| SMS               | Send to a number; optional eligibility checks |
+| Workflow state    | Get, Get Many, Set                            |
+| Operation receipt | Get                                           |
 
 Object, editable field and filter dropdowns load from the selected credential's organisation. Get Many provides schema-driven field/operator/value criteria, All/Any matching, typed date/number inputs and picklist choices. Get can match by ID or criteria; criteria must match exactly one record. Get Many, Search and state lists return individual n8n items, preserve item linking and support pagination. Search retains JSON for advanced nested queries; create/update field values use JSON inputs. Deletes, bulk writes, files, webhooks and confirmed SMS delivery are outside this version.
 
@@ -35,7 +35,8 @@ Keys use the lifetime selected in the portal, including Until revoked. For rotat
 - Search: choose an object, set Limit or Return All, and optionally provide a portal query such as `{"search":"example"}`. The node manages `page` and `pageSize`; do not include those in the query JSON. Offset paging is not a snapshot; edits during scanning can change results.
 - Create/update: choose fields and supply JSON values (`"text"`, `true`, `123`, `null`, or arrays of IDs). Supply the published model version where required. Update requires the current row version. Re-read after a version conflict before making a new intended change.
 - Every mutation requires a **Logical Operation Key**. Use a stable record/campaign/cycle key. Keep it unchanged when repeating the same request after a lost response. Use a new key only for a genuinely new intended operation.
-- SMS uses the portal integration's configured recipient, phone and affirmative permission fields and organisation SMS connector. `accepted` means provider acceptance, not delivery. `unknown`/pending outcomes must be reconciled through portal operation history; do not change keys to bypass them.
+- SMS: new node version 1.2 uses **To Number**, including the country code. Enable `sms.send` and choose **SMS recipients → Direct numbers from the workflow** when creating its portal integration. Check recipient permission/eligibility in the workflow. Older nodes retain record-based sends; existing grants are not expanded automatically.
+- Record-based SMS uses the portal integration's configured recipient, phone and affirmative permission fields and organisation SMS connector. `accepted` means provider acceptance, not delivery. `unknown`/pending outcomes must be reconciled through portal operation history; do not change keys to bypass them.
 - The node does not automatically retry requests. For 429, wait before retrying. Inspect write/SMS receipts after ambiguous failures. n8n's Retry On Fail must retain the same logical key. Avoid unnecessary personal data in execution history.
 - Return All may use substantial n8n memory; use Limit for bounded scans.
 

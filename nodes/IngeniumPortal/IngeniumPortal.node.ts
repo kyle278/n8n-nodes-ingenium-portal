@@ -73,7 +73,7 @@ const properties: INodeProperties[] = [
 			{ name: 'Array', value: 'array' },
 		],
 		description: 'Use object API names as keys instead of numbered array entries',
-		displayOptions: { show: { resource: ['schema'], '@version': [1.1] } },
+		displayOptions: { show: { resource: ['schema'], '@version': [{ _cnd: { gte: 1.1 } }] } },
 	},
 	operation('sms', [['Send', 'send', 'Send an SMS']]),
 	operation('state', [
@@ -99,7 +99,7 @@ const properties: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		displayOptions: { show: { resource: ['record', 'sms'], operation: ['update', 'send'] } },
+		displayOptions: { show: { resource: ['record'], operation: ['update'] } },
 	},
 	{
 		displayName: 'Record ID',
@@ -108,6 +108,29 @@ const properties: INodeProperties[] = [
 		required: true,
 		default: '',
 		displayOptions: { show: { resource: ['record'], operation: ['get'], matchBy: ['id'] } },
+	},
+	{
+		displayName: 'Record ID',
+		name: 'recordId',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: { resource: ['sms'], operation: ['send'], '@version': [{ _cnd: { lt: 1.2 } }] },
+		},
+	},
+	{
+		displayName: 'To Number',
+		name: 'toNumber',
+		type: 'string',
+		required: true,
+		default: '',
+		placeholder: '+353871234567',
+		description:
+			'Destination phone number including country code. Map a phone number from a previous step or enter it directly.',
+		displayOptions: {
+			show: { resource: ['sms'], operation: ['send'], '@version': [{ _cnd: { gte: 1.2 } }] },
+		},
 	},
 	...filterProperties,
 	{
@@ -286,8 +309,8 @@ export class IngeniumPortal implements INodeType {
 		name: 'ingeniumPortal',
 		icon: { light: 'file:ingeniumPortal.svg', dark: 'file:ingeniumPortal.dark.svg' },
 		group: ['input'],
-		version: [1, 1.1],
-		defaultVersion: 1.1,
+		version: [1, 1.1, 1.2],
+		defaultVersion: 1.2,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Read and write organisation records, send SMS and manage workflow state',
 		defaults: { name: 'Ingenium Portal' },
@@ -349,12 +372,25 @@ export class IngeniumPortal implements INodeType {
 							: p('checks');
 					if (!Array.isArray(checks))
 						throw new NodeOperationError(this.getNode(), 'Eligibility Checks must be a JSON array');
+					const direct = this.getNode().typeVersion >= 1.2;
+					const recipient: IDataObject = direct
+						? { toNumber: p('toNumber') }
+						: { recordId: p('recordId') };
+					if (
+						direct &&
+						(typeof recipient.toNumber !== 'string' ||
+							!/^\+[1-9]\d{7,14}$/.test(recipient.toNumber.replace(/[\s()-]/g, '')))
+					)
+						throw new NodeOperationError(
+							this.getNode(),
+							'To Number must include the international country code, for example +353871234567',
+						);
 					emit(
 						await request.call(
 							this,
 							'POST',
 							'/messages/sms',
-							{ recordId: p('recordId'), message: p('message'), checks },
+							{ ...recipient, message: p('message'), checks },
 							p('operationKey') as string,
 						),
 					);

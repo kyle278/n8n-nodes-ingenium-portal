@@ -265,3 +265,90 @@ test('schema output can use object keys while keeping array compatibility', asyn
 	assert.equal(old.default, 'array');
 	assert.equal(latest.default, 'byName');
 });
+
+test('new criteria wait for a selected field before requesting operators or options', async () => {
+	const fixture = ctx({ object: 'contact', '&field': '' }, () => ({}));
+	const methods = new IngeniumPortal().methods.loadOptions;
+	assert.deepEqual(await methods.getFilterOperators.call(fixture.context), []);
+	assert.deepEqual(await methods.getFilterOptions.call(fixture.context), []);
+	assert.equal(fixture.calls.length, 0);
+	const operator = filterProperties
+		.find((p) => p.name === 'filters')
+		.options[0].values.find((p) => p.name === 'operator');
+	assert.equal(NodeHelpers.displayParameter({ field: '', operator: '' }, operator), false);
+});
+
+test('new SMS version sends a To Number with no Record ID and retains the logical key', async () => {
+	const fixture = ctx(
+		{
+			resource: 'sms',
+			operation: 'send',
+			toNumber: '+353871234567',
+			message: 'Test',
+			checks: '[]',
+			operationKey: 'reminder:test',
+		},
+		() => ({ outcome: 'accepted' }),
+	);
+	fixture.context.getNode = () => ({
+		name: 'test',
+		type: 'ingeniumPortal',
+		typeVersion: 1.2,
+		parameters: {},
+		position: [0, 0],
+	});
+	await new IngeniumPortal().execute.call(fixture.context);
+	assert.deepEqual(fixture.calls[0].body, {
+		toNumber: '+353871234567',
+		message: 'Test',
+		checks: [],
+	});
+	assert.equal(fixture.calls[0].headers['Idempotency-Key'], 'reminder:test');
+	const props = new IngeniumPortal().description.properties;
+	const shown = props.filter((p) =>
+		NodeHelpers.displayParameter({ resource: 'sms', operation: 'send' }, p, { typeVersion: 1.2 }),
+	);
+	assert.equal(
+		shown.some((p) => p.name === 'recordId'),
+		false,
+	);
+	assert.equal(
+		shown.some((p) => p.name === 'toNumber'),
+		true,
+	);
+	assert.equal(
+		props
+			.filter((p) => p.name === 'recordId')
+			.some((p) =>
+				NodeHelpers.displayParameter({ resource: 'sms', operation: 'send' }, p, {
+					typeVersion: 1.1,
+				}),
+			),
+		true,
+	);
+});
+test('invalid direct numbers are rejected before making an SMS request', async () => {
+	const fixture = ctx(
+		{
+			resource: 'sms',
+			operation: 'send',
+			toNumber: '0871234567',
+			message: 'Test',
+			checks: '[]',
+			operationKey: 'test',
+		},
+		() => ({}),
+	);
+	fixture.context.getNode = () => ({
+		name: 'test',
+		type: 'ingeniumPortal',
+		typeVersion: 1.2,
+		parameters: {},
+		position: [0, 0],
+	});
+	await assert.rejects(
+		new IngeniumPortal().execute.call(fixture.context),
+		/international country code/,
+	);
+	assert.equal(fixture.calls.length, 0);
+});

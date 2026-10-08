@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — Direct SMS recipients and criteria loading
+
+Node version 1.2 sends SMS to an explicit To Number without a Record ID, using an integration authorised for direct recipients and the organisation's existing SMS connector. Older node versions keep record-based recipients and permission checks.
+
+Wait for a selected field before displaying or loading the operator picker. New criteria no longer request options prematurely or show a misleading load error.
+
 ## 0.1.3 — Schema-driven record filters
 
 Add Get Many and Get by filters with repeatable criteria, All/Any matching, schema-provided operators, typed number/date/range inputs and schema picklist choices. Get by filters requires a unique match and returns the canonical record. Get Many returns individual records with pagination and limits. Schema Get can return objects keyed by API name, with node version 1.1 using that format by default and version 1 preserving array output. Existing Get by ID, advanced JSON Search and writes remain compatible. Node installation on n8n Cloud still awaits verification.

@@ -191,6 +191,7 @@ const filterDefinitions: INodeProperties[] = [
 						type: 'options',
 						default: '',
 						required: true,
+						displayOptions: { show: { field: [{ _cnd: { regex: '^.+\\|.+$' } }] } },
 						typeOptions: {
 							loadOptionsMethod: 'getFilterOperators',
 							loadOptionsDependsOn: ['object', '&field'],
@@ -233,6 +234,7 @@ export const filterLoadOptions = {
 			.sort((a, b) => a.name.localeCompare(b.name));
 	},
 	async getFilterOperators(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+		if (!this.getCurrentNodeParameter('&field')) return [];
 		const field = await currentField(this);
 		return field.filterOperators!.map((value) => ({
 			name: value
@@ -243,6 +245,7 @@ export const filterLoadOptions = {
 		}));
 	},
 	async getFilterOptions(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+		if (!this.getCurrentNodeParameter('&field')) return [];
 		return ((await currentField(this)).options ?? [])
 			.map((o) => ({ name: `${o.label}${o.active ? '' : ' (Inactive)'}`, value: o.id }))
 			.sort((a, b) => a.name.localeCompare(b.name));
