@@ -1,5 +1,7 @@
 # n8n-nodes-ingenium-portal
 
+For immediate n8n Cloud setup, use the [built-in HTTP workflows](examples/cloud/README.md). They do not require installing this custom node. Custom-node Cloud availability remains subject to n8n verification.
+
 Connect n8n workflows to an organisation in Ingenium Portal. Read and update CRM records, send permission-checked SMS and keep durable workflow state using the portal's organisation integration API.
 
 **Development preview:** not published to npm or verified by n8n. It cannot yet be installed on n8n Cloud. Until verification, custom-node examples require a local/self-hosted test instance. The API can already be used on Cloud with HTTP Request nodes.

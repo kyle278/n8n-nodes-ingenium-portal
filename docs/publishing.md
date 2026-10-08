@@ -13,7 +13,8 @@ Reviewed on 8 October 2026 against the user-supplied [Creator Hub](https://n8n.n
 - Run the community package scanner before submission and fix findings. Automated checks are not an approval guarantee.
 - Review public documentation and example workflow screenshots.
 - Configure npm Trusted Publisher for owner `kyle278`, repository `n8n-nodes-ingenium-portal`, workflow `publish.yml`, or a package-limited granular token in GitHub's `NPM_TOKEN` secret. The npm account owner must complete first-package access/bootstrap; do not paste tokens into chat.
-- Update package version and changelog, tag `v<version>` only when ready. Publish through GitHub Actions with provenance; do not publish locally.
+- Initial-package bootstrap: npm requires the package to exist before a Trusted Publisher can be configured. If needed, publish an explicitly labelled preview once using the authenticated account, then configure Trusted Publisher and publish a new candidate version through GitHub Actions with provenance. The bootstrap is not the verification candidate.
+- Update package version and changelog, tag `v<version>` only when ready. Publish the verification candidate through GitHub Actions with provenance.
 - Submit the published package at https://creators.n8n.io/nodes. Cloud installation remains unavailable until n8n accepts it.
 
 ## Example/template gate
