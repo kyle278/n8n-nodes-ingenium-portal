@@ -5,11 +5,22 @@ import type {
 	IHttpRequestMethods,
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+export type SchemaField = {
+	id: string;
+	label: string;
+	type: string;
+	editable: boolean;
+	resultType?: string;
+	filterable?: boolean;
+	filterValueType?: string;
+	filterOperators?: string[];
+	options?: { id: string; label: string; value: string; active: boolean }[];
+};
 export type Schema = {
 	objects: {
 		key: string;
 		name: string;
-		fields: { id: string; label: string; type: string; editable: boolean }[];
+		fields: SchemaField[];
 	}[];
 };
 export function portalOrigin(value: string): string {

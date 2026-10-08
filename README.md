@@ -4,31 +4,34 @@ For immediate n8n Cloud setup, use the [built-in HTTP workflows](examples/cloud/
 
 Connect n8n workflows to an organisation in Ingenium Portal. Read and update CRM records, send permission-checked SMS and keep durable workflow state using the portal's organisation integration API.
 
-**Development preview:** not published to npm or verified by n8n. It cannot yet be installed on n8n Cloud. Until verification, custom-node examples require a local/self-hosted test instance. The API can already be used on Cloud with HTTP Request nodes.
+**Published preview:** available on npm for local/self-hosted n8n. n8n Cloud installation still requires verification. The API can already be used on Cloud with HTTP Request nodes.
 
 ## Operations
 
 | Resource          | Operations                                         |
 | ----------------- | -------------------------------------------------- |
-| Record            | Create, Get, Search, Update                        |
+| Record            | Create, Get, Get Many, Search, Update              |
 | Schema            | Get allowed objects, fields and options            |
 | SMS               | Send to a record, with optional eligibility checks |
 | Workflow state    | Get, Get Many, Set                                 |
 | Operation receipt | Get                                                |
 
-Object and editable field dropdowns load from the selected credential's organisation. Search and state lists return individual n8n items, preserve item linking and support pagination. Advanced filters and typed field values currently use JSON inputs. Deletes, bulk writes, files, webhooks and confirmed SMS delivery are outside this version.
+Object, editable field and filter dropdowns load from the selected credential's organisation. Get Many provides schema-driven field/operator/value criteria, All/Any matching, typed date/number inputs and picklist choices. Get can match by ID or criteria; criteria must match exactly one record. Get Many, Search and state lists return individual n8n items, preserve item linking and support pagination. Search retains JSON for advanced nested queries; create/update field values use JSON inputs. Deletes, bulk writes, files, webhooks and confirmed SMS delivery are outside this version.
 
 ## Credentials
 
-1. In the portal, choose the organisation and open Settings → Connectors → Integration API.
+1. In the portal, open Organiser → Organisations → your organisation → Connectors → Integration API (organisation owners/admins can also use Settings → Connectors).
 2. Create an integration with an active service member, allowed objects and the scopes needed by the workflow. Include `schema.read` for connection testing and dropdowns.
 3. In n8n, create an **Ingenium Portal API** credential. Enter the portal HTTPS origin and the integration key; omit the `Bearer` prefix.
 4. Test the connection and choose this credential on your nodes. Use separate credentials for each organisation. Their organisation cannot be changed with a node input.
 
-Keys expire. Issue a replacement in the portal, update/test the n8n credential and revoke the old key. Never put a key in workflow JSON. This version does not accept a portal password or implement OAuth. Portal consent and token endpoints will live in the separate `ingeniumportal` repository; this package will gain an OAuth credential after those are available.
+Keys use the lifetime selected in the portal, including Until revoked. For rotation, issue a replacement, update/test the n8n credential and revoke the old key. Never put a key in workflow JSON. This version does not accept a portal password or implement OAuth. Portal consent and token endpoints will live in the separate `ingeniumportal` repository; this package will gain an OAuth credential after those are available.
 
 ## Usage and recovery
 
+- Schema Get: new node version 1.1 returns `objects.contact`, `objects.opportunity`, etc. Select **Object Output Format → Array** for indexed entries. Existing node version 1 keeps its original array default and can also switch to names. These are the schema API names (usually singular).
+- Get Many: choose an object, click **Add Criterion**, then choose a field, operator and value. Picklists show schema options, including inactive choices for historical filtering. Use **All Criteria** or **Any Criteria**, and set Limit or Return All. An empty criteria list returns all accessible records up to the limit. Schema type/operator/option changes are checked before execution.
+- Get: choose **Match By → Filters** for a unique record lookup, or **Record ID** for the existing direct lookup. No matches or multiple matches produce an error; use Get Many when multiple matches are expected.
 - Search: choose an object, set Limit or Return All, and optionally provide a portal query such as `{"search":"example"}`. The node manages `page` and `pageSize`; do not include those in the query JSON. Offset paging is not a snapshot; edits during scanning can change results.
 - Create/update: choose fields and supply JSON values (`"text"`, `true`, `123`, `null`, or arrays of IDs). Supply the published model version where required. Update requires the current row version. Re-read after a version conflict before making a new intended change.
 - Every mutation requires a **Logical Operation Key**. Use a stable record/campaign/cycle key. Keep it unchanged when repeating the same request after a lost response. Use a new key only for a genuinely new intended operation.

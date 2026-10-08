@@ -10,6 +10,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { jsonObject, pathPart, request, type Schema } from './helpers';
+import { buildFilters, filterProperties, filterLoadOptions, type Criterion } from './filters';
 
 const operation = (resource: string, options: [string, string, string][]): INodeProperties => {
 	const property: INodeProperties = {
@@ -45,10 +46,35 @@ const properties: INodeProperties[] = [
 	operation('record', [
 		['Create', 'create', 'Create a record'],
 		['Get', 'get', 'Get a record'],
+		['Get Many', 'getMany', 'Get many records'],
 		['Search', 'search', 'Search records'],
 		['Update', 'update', 'Update a record'],
 	]),
 	operation('schema', [['Get', 'get', 'Get the schema']]),
+	{
+		displayName: 'Object Output Format',
+		name: 'schemaFormat',
+		type: 'options',
+		default: 'array',
+		options: [
+			{ name: 'By Object API Name', value: 'byName' },
+			{ name: 'Array', value: 'array' },
+		],
+		description: 'Use object API names as keys instead of numbered array entries',
+		displayOptions: { show: { resource: ['schema'], '@version': [1] } },
+	},
+	{
+		displayName: 'Object Output Format',
+		name: 'schemaFormat',
+		type: 'options',
+		default: 'byName',
+		options: [
+			{ name: 'By Object API Name', value: 'byName' },
+			{ name: 'Array', value: 'array' },
+		],
+		description: 'Use object API names as keys instead of numbered array entries',
+		displayOptions: { show: { resource: ['schema'], '@version': [1.1] } },
+	},
 	operation('sms', [['Send', 'send', 'Send an SMS']]),
 	operation('state', [
 		['Get', 'get', 'Get workflow state'],
@@ -73,8 +99,17 @@ const properties: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		displayOptions: { show: { resource: ['record', 'sms'], operation: ['get', 'update', 'send'] } },
+		displayOptions: { show: { resource: ['record', 'sms'], operation: ['update', 'send'] } },
 	},
+	{
+		displayName: 'Record ID',
+		name: 'recordId',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: { show: { resource: ['record'], operation: ['get'], matchBy: ['id'] } },
+	},
+	...filterProperties,
 	{
 		displayName: 'Logical Operation Key',
 		name: 'operationKey',
@@ -251,7 +286,8 @@ export class IngeniumPortal implements INodeType {
 		name: 'ingeniumPortal',
 		icon: { light: 'file:ingeniumPortal.svg', dark: 'file:ingeniumPortal.dark.svg' },
 		group: ['input'],
-		version: 1,
+		version: [1, 1.1],
+		defaultVersion: 1.1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Read and write organisation records, send SMS and manage workflow state',
 		defaults: { name: 'Ingenium Portal' },
@@ -263,6 +299,7 @@ export class IngeniumPortal implements INodeType {
 	};
 	methods = {
 		loadOptions: {
+			...filterLoadOptions,
 			async getObjects(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const schema = (await request.call(this, 'GET', '/schema')) as unknown as Schema;
 				return schema.objects
@@ -289,7 +326,14 @@ export class IngeniumPortal implements INodeType {
 					op = p('operation') as string;
 				const emit = (data: IDataObject) => output.push({ json: data, pairedItem: { item: i } });
 				if (resource === 'schema') {
-					emit(await request.call(this, 'GET', '/schema'));
+					const schema = await request.call(this, 'GET', '/schema');
+					if (p('schemaFormat') === 'byName') {
+						const objects = schema.objects as unknown as Schema['objects'];
+						emit({
+							...schema,
+							objects: Object.fromEntries(objects.map((object) => [object.key, object])),
+						});
+					} else emit(schema);
 					continue;
 				}
 				if (resource === 'receipt') {
@@ -318,27 +362,64 @@ export class IngeniumPortal implements INodeType {
 				}
 				if (resource === 'record') {
 					const base = `/objects/${pathPart(p('object') as string)}`;
-					if (op === 'search') {
-						const query = jsonObject(p('query'), 'Query');
+					if (op === 'search' || op === 'getMany' || (op === 'get' && p('matchBy') === 'filters')) {
+						let query: IDataObject;
+						if (op === 'search') query = jsonObject(p('query'), 'Query');
+						else {
+							const schema = (await request.call(this, 'GET', '/schema')) as unknown as Schema;
+							const fields = schema.objects.find((o) => o.key === p('object'))?.fields;
+							if (!fields)
+								throw new NodeOperationError(
+									this.getNode(),
+									'Object is unavailable. Refresh the schema and select it again.',
+								);
+							const criteria = (p('filters') as { criteria?: Criterion[] })?.criteria ?? [];
+							if (op === 'get' && !criteria.length)
+								throw new NodeOperationError(
+									this.getNode(),
+									'Add at least one criterion to get a record by filters',
+								);
+							query = {
+								filters: buildFilters(fields, criteria, p('matchCriteria')),
+							};
+						}
 						if ('page' in query || 'pageSize' in query)
 							throw new NodeOperationError(
 								this.getNode(),
 								'This node manages pagination; remove page/pageSize from Query',
 							);
-						const limit = p('returnAll') ? Infinity : (p('limit') as number);
+						const limit = op === 'get' ? 2 : p('returnAll') ? Infinity : (p('limit') as number);
+						const singleResults: IDataObject[] = [];
 						let count = 0;
 						for (let page = 1; ; page++) {
 							const result = await request.call(this, 'POST', `${base}/query`, {
 								query: { ...query, page, pageSize: 100 },
 							});
 							const records = result.records as IDataObject[];
+							if (op === 'get' && Number(result.totalCount) > 1)
+								throw new NodeOperationError(
+									this.getNode(),
+									'More than one record matches. Add criteria or use Get Many.',
+								);
 							for (const row of records) {
 								if (count >= limit) break;
-								emit(row);
+								if (op === 'get') singleResults.push(row);
+								else emit(row);
 								count++;
 							}
 							if (count >= limit || !records.length || page * 100 >= Number(result.totalCount))
 								break;
+						}
+						if (op === 'get') {
+							if (singleResults.length !== 1)
+								throw new NodeOperationError(
+									this.getNode(),
+									'No unique record matches these filters',
+								);
+							const match = singleResults[0];
+							emit(
+								await request.call(this, 'GET', `${base}/records/${pathPart(match.id as string)}`),
+							);
 						}
 					} else if (op === 'get')
 						emit(
