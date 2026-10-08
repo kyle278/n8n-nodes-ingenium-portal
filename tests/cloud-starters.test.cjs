@@ -6,6 +6,15 @@ const workflows = fs
 	.readdirSync(path.join(__dirname, '../examples/cloud'))
 	.filter((f) => f.endsWith('.json'))
 	.map((f) => JSON.parse(fs.readFileSync(path.join(__dirname, '../examples/cloud', f))));
+test('Request expressions do not close the n8n delimiter inside nested objects', () => {
+	for (const w of workflows)
+		for (const n of w.nodes) {
+			const body = n.parameters.jsonBody;
+			if (typeof body === 'string' && body.startsWith('={{')) {
+				assert.equal(body.slice(3, -2).includes('}}'), false, n.name);
+			}
+		}
+});
 function execute(workflow, name, json, all) {
 	const n = workflow.nodes.find((n) => n.name === name);
 	return new Function('$input', 'URL', n.parameters.jsCode)(

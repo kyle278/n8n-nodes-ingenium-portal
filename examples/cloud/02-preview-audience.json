@@ -94,7 +94,7 @@
 				"genericAuthType": "httpHeaderAuth",
 				"sendBody": true,
 				"specifyBody": "json",
-				"jsonBody": "={{ {query: {...$('Validate audience query').first().json.query, page:1,pageSize:100}} }}",
+				"jsonBody": "={{ {query: {...$('Validate audience query').first().json.query, page:1,pageSize:100} } }}",
 				"options": {
 					"timeout": 60000,
 					"redirect": {

@@ -88,7 +88,7 @@
 				"genericAuthType": "httpHeaderAuth",
 				"sendBody": true,
 				"specifyBody": "json",
-				"jsonBody": "={{ {expectedVersion:0,value:{purpose:'n8n setup probe',version:1}} }}",
+				"jsonBody": "={{ {expectedVersion:0,value:{purpose:'n8n setup probe',version:1} } }}",
 				"options": {
 					"timeout": 60000,
 					"redirect": {

@@ -164,7 +164,7 @@ write(
 			'Read bounded audience pages',
 			'POST',
 			"'/objects/' + encodeURIComponent($('Validate audience query').first().json.objectApiName) + '/query'",
-			"={{ {query: {...$('Validate audience query').first().json.query, page:1,pageSize:100}} }}",
+			"={{ {query: {...$('Validate audience query').first().json.query, page:1,pageSize:100} } }}",
 			1480,
 			{
 				pagination: {
@@ -213,7 +213,7 @@ write(
 				'Write setup state',
 				'PATCH',
 				"'/state/setup/' + encodeURIComponent($('Validate probe identity').first().json.probeKey)",
-				"={{ {expectedVersion:0,value:{purpose:'n8n setup probe',version:1}} }}",
+				"={{ {expectedVersion:0,value:{purpose:'n8n setup probe',version:1} } }}",
 				1480,
 			),
 			parameters: {
@@ -221,7 +221,7 @@ write(
 					'',
 					'PATCH',
 					"'/state/setup/' + encodeURIComponent($('Validate probe identity').first().json.probeKey)",
-					"={{ {expectedVersion:0,value:{purpose:'n8n setup probe',version:1}} }}",
+					"={{ {expectedVersion:0,value:{purpose:'n8n setup probe',version:1} } }}",
 					1480,
 				).parameters,
 				sendHeaders: true,
