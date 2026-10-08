@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.1.1 — Verification candidate
+## 0.1.2 — Published verification candidate
+
+Published from GitHub Actions using the official n8n CLI release command and npm Trusted Publishing. npm provenance and the official community package scanner passed on 8 October 2026. n8n review and full organisation runtime acceptance remain pending.
+
+## 0.1.1 — Unpublished candidate
 
 Publish through the package-specific GitHub Trusted Publisher with provenance. Includes the API-key node and built-in HTTP setup workflows. n8n verification and full organisation runtime acceptance remain pending; this release is not a claim of Cloud custom-node availability.
 

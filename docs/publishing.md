@@ -4,6 +4,8 @@ Reviewed on 8 October 2026 against the user-supplied [Creator Hub](https://n8n.n
 
 ## Node package gate
 
+Current release: `0.1.2`, published through [GitHub Actions](https://github.com/kyle278/n8n-nodes-ingenium-portal/actions/runs/37815483444) with npm provenance. The official `@n8n/scan-community-package@0.38.0` scanner verified the attested GitHub source at `5d3c5da` and passed all security checks on 8 October 2026. Build, lint and 14 tests passed. Creator Portal sign-in, local custom-node UI testing, two-organisation runtime acceptance and n8n verification remain pending. The built-in HTTP starters have been imported into n8n Cloud 2.41.4; origin validation and the default SMS guard were exercised there. Live API credential tests remain pending.
+
 - Public source under `kyle278`; npm repository metadata must match.
 - MIT licence, TypeScript, official CLI scaffold, strict Cloud lint configuration.
 - One service, no external runtime dependencies, no filesystem/environment access in runtime node code, no secret logging.
