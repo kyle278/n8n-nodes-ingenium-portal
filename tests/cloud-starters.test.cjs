@@ -8,10 +8,13 @@ const workflows = fs
 	.map((f) => JSON.parse(fs.readFileSync(path.join(__dirname, '../examples/cloud', f))));
 function execute(workflow, name, json, all) {
 	const n = workflow.nodes.find((n) => n.name === name);
-	return new Function('$input', n.parameters.jsCode)({
-		first: () => ({ json }),
-		all: () => all.map((json) => ({ json })),
-	});
+	return new Function('$input', 'URL', n.parameters.jsCode)(
+		{
+			first: () => ({ json }),
+			all: () => all.map((json) => ({ json })),
+		},
+		undefined,
+	);
 }
 test('Cloud starters cannot activate schedules, leak credentials, follow redirects or retry dispatch', () => {
 	assert.equal(workflows.length, 4);

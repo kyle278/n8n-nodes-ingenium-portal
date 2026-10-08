@@ -62,7 +62,7 @@
 			"typeVersion": 2,
 			"position": [1020, 680],
 			"parameters": {
-				"jsCode": "const c=$input.first().json;\nconst u=new URL(c.portalOrigin);\nif(u.protocol!=='https:'||u.origin!==c.portalOrigin||u.username||u.password) throw new Error('Set portalOrigin to the exact HTTPS portal origin, without a trailing slash.');\nreturn [{json:c}];"
+				"jsCode": "const c=$input.first().json;\nconst origin=typeof c.portalOrigin==='string'&&c.portalOrigin.match(/^https:[/][/](?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?[.])+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?::([1-9][0-9]{0,4}))?$/);\nif(!origin||c.portalOrigin.length>300||(origin[1]&&Number(origin[1])>65535)) throw new Error('Set portalOrigin to the exact HTTPS portal domain, without a trailing slash, path or credentials.');\nreturn [{json:c}];"
 			}
 		},
 		{

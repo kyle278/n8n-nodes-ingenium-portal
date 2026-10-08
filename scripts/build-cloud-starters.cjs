@@ -59,8 +59,8 @@ const http = (name, method, endpoint, body, x, extra = {}) => ({
 const validate = code(
 	'Validate configuration',
 	`const c=$input.first().json;
-const u=new URL(c.portalOrigin);
-if(u.protocol!=='https:'||u.origin!==c.portalOrigin||u.username||u.password) throw new Error('Set portalOrigin to the exact HTTPS portal origin, without a trailing slash.');
+const origin=typeof c.portalOrigin==='string'&&c.portalOrigin.match(/^https:[/][/](?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?[.])+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?::([1-9][0-9]{0,4}))?$/);
+if(!origin||c.portalOrigin.length>300||(origin[1]&&Number(origin[1])>65535)) throw new Error('Set portalOrigin to the exact HTTPS portal domain, without a trailing slash, path or credentials.');
 return [{json:c}];`,
 	1020,
 );
